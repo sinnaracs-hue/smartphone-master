@@ -479,7 +479,9 @@
         task3Btn.addEventListener('mouseleave', stopHold);
         task3Btn.addEventListener('touchend', stopHold);
 
-        // 8단계: 확대하기
+        // =====================================
+        // 8단계: 확대하기 (터치 인식 대폭 개선)
+        // =====================================
         let zoomInCount = 0;
         const zoomInArea = document.getElementById('zoom-in-area');
         const zoomInTarget = document.getElementById('zoom-in-target');
@@ -513,10 +515,20 @@
         });
         zoomInArea.addEventListener('touchmove', e => {
             if(e.cancelable) e.preventDefault();
-            if (e.touches.length === 2 && initDistIn > 0 && !inFired) {
+            if (e.touches.length === 2 && !inFired) {
                 let curDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                if (curDist - initDistIn > 30) {
+                
+                if (initDistIn === 0) initDistIn = curDist;
+
+                // 유저가 손가락을 모으면 기준점을 더 좁게 갱신 (살짝만 넓혀도 성공하도록 보정)
+                if (curDist < initDistIn) {
+                    initDistIn = curDist;
+                }
+
+                // 성공 기준을 기존 30px에서 15px로 대폭 낮춤
+                if (curDist - initDistIn > 15) {
                     handleZoomInSuccess();
+                    initDistIn = curDist; // 성공 후 새로운 기준점
                 }
             }
         });
@@ -528,7 +540,9 @@
             if (e.deltaY < 0) handleZoomInSuccess();
         });
 
-        // 9단계: 축소하기
+        // =====================================
+        // 9단계: 축소하기 (터치 인식 대폭 개선)
+        // =====================================
         let zoomOutCount = 0;
         const zoomOutArea = document.getElementById('zoom-out-area');
         const zoomOutTarget = document.getElementById('zoom-out-target');
@@ -562,10 +576,20 @@
         });
         zoomOutArea.addEventListener('touchmove', e => {
             if(e.cancelable) e.preventDefault();
-            if (e.touches.length === 2 && initDistOut > 0 && !outFired) {
+            if (e.touches.length === 2 && !outFired) {
                 let curDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                if (initDistOut - curDist > 30) {
+                
+                if (initDistOut === 0) initDistOut = curDist;
+
+                // 유저가 손가락을 더 넓히면 기준점을 더 넓게 갱신 (살짝만 오므려도 성공하도록 보정)
+                if (curDist > initDistOut) {
+                    initDistOut = curDist;
+                }
+
+                // 성공 기준을 기존 30px에서 15px로 대폭 낮춤
+                if (initDistOut - curDist > 15) {
                     handleZoomOutSuccess();
+                    initDistOut = curDist; // 성공 후 새로운 기준점
                 }
             }
         });
