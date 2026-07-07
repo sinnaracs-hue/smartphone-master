@@ -12,7 +12,7 @@
     <style>
         html, body {
             height: 100%;
-            height: 100dvh; /* 모바일 브라우저 상하단 바 제외한 실제 꽉 찬 높이 */
+            height: 100dvh;
             overflow: hidden;
             margin: 0;
             padding: 0;
@@ -71,7 +71,7 @@
             </div>
         </div>
 
-        <!-- 메인 콘텐츠 영역 (스크롤 없이 꽉 차게) -->
+        <!-- 메인 콘텐츠 영역 -->
         <div class="flex-grow p-4 sm:p-5 flex flex-col relative" id="content-area">
             
             <!-- 1단계: 진동 모드 -->
@@ -288,7 +288,14 @@
         function unlockNext() {
             nextBtn.classList.remove('bg-slate-300', 'text-slate-500', 'pointer-events-none');
             nextBtn.classList.add('bg-blue-600', 'text-white', 'shadow-xl');
-            nextBtn.innerText = '다음 단계로 가기 ➔';
+            
+            // 9단계 완료 시 버튼 텍스트 변경
+            if (currentStep === totalSteps) {
+                nextBtn.innerText = '결과 확인하기 ➔';
+            } else {
+                nextBtn.innerText = '다음 단계로 가기 ➔';
+            }
+            
             nextBtn.classList.add('animate-shake');
             setTimeout(() => nextBtn.classList.remove('animate-shake'), 500);
         }
@@ -300,13 +307,19 @@
         }
 
         nextBtn.addEventListener('click', () => {
+            // 에러 방지: 10단계를 넘어가려 하면 무시
+            if (currentStep > totalSteps) return;
+
             document.getElementById(`step${currentStep}`).classList.add('hidden');
             document.getElementById(`step${currentStep}`).classList.remove('flex');
             
             currentStep++;
             
-            document.getElementById(`step${currentStep}`).classList.remove('hidden');
-            document.getElementById(`step${currentStep}`).classList.add('flex');
+            const nextStepEl = document.getElementById(`step${currentStep}`);
+            if (nextStepEl) {
+                nextStepEl.classList.remove('hidden');
+                nextStepEl.classList.add('flex');
+            }
 
             if(currentStep <= totalSteps) {
                 const dots = progressDots.children;
@@ -315,6 +328,7 @@
                 }
                 lockNext();
             } else {
+                // 10단계(완료 화면) 도달 시 헤더와 푸터 숨김 처리
                 document.getElementById('footer-area').classList.add('hidden');
                 document.getElementById('progress-dots').parentElement.classList.add('hidden');
                 fireConfetti();
@@ -479,9 +493,7 @@
         task3Btn.addEventListener('mouseleave', stopHold);
         task3Btn.addEventListener('touchend', stopHold);
 
-        // =====================================
-        // 8단계: 확대하기 (터치 인식 대폭 개선)
-        // =====================================
+        // 8단계: 확대하기
         let zoomInCount = 0;
         const zoomInArea = document.getElementById('zoom-in-area');
         const zoomInTarget = document.getElementById('zoom-in-target');
@@ -519,16 +531,12 @@
                 let curDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                 
                 if (initDistIn === 0) initDistIn = curDist;
-
-                // 유저가 손가락을 모으면 기준점을 더 좁게 갱신 (살짝만 넓혀도 성공하도록 보정)
                 if (curDist < initDistIn) {
                     initDistIn = curDist;
                 }
-
-                // 성공 기준을 기존 30px에서 15px로 대폭 낮춤
                 if (curDist - initDistIn > 15) {
                     handleZoomInSuccess();
-                    initDistIn = curDist; // 성공 후 새로운 기준점
+                    initDistIn = curDist;
                 }
             }
         });
@@ -540,9 +548,7 @@
             if (e.deltaY < 0) handleZoomInSuccess();
         });
 
-        // =====================================
-        // 9단계: 축소하기 (터치 인식 대폭 개선)
-        // =====================================
+        // 9단계: 축소하기 
         let zoomOutCount = 0;
         const zoomOutArea = document.getElementById('zoom-out-area');
         const zoomOutTarget = document.getElementById('zoom-out-target');
@@ -565,6 +571,13 @@
             } else {
                 zoomOutMsg.innerText = '축소를 완벽히 마스터하셨습니다!';
                 unlockNext();
+                
+                // 편의성 개선: 1.5초 후 자동으로 10단계(폭죽 화면)로 이동
+                setTimeout(() => {
+                    if (currentStep === 9) {
+                        nextBtn.click();
+                    }
+                }, 1500);
             }
         }
 
@@ -580,16 +593,12 @@
                 let curDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                 
                 if (initDistOut === 0) initDistOut = curDist;
-
-                // 유저가 손가락을 더 넓히면 기준점을 더 넓게 갱신 (살짝만 오므려도 성공하도록 보정)
                 if (curDist > initDistOut) {
                     initDistOut = curDist;
                 }
-
-                // 성공 기준을 기존 30px에서 15px로 대폭 낮춤
                 if (initDistOut - curDist > 15) {
                     handleZoomOutSuccess();
-                    initDistOut = curDist; // 성공 후 새로운 기준점
+                    initDistOut = curDist; 
                 }
             }
         });
