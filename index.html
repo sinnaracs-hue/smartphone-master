@@ -306,8 +306,8 @@
             nextBtn.innerText = '미션을 완료해주세요';
         }
 
-        nextBtn.addEventListener('click', () => {
-            // 에러 방지: 10단계를 넘어가려 하면 무시
+        // 공통 단계 이동 로직 분리 (모바일 환경에서 직접 호출하기 위함)
+        function proceedToNext() {
             if (currentStep > totalSteps) return;
 
             document.getElementById(`step${currentStep}`).classList.add('hidden');
@@ -333,7 +333,10 @@
                 document.getElementById('progress-dots').parentElement.classList.add('hidden');
                 fireConfetti();
             }
-        });
+        }
+
+        // 하단 버튼 클릭 이벤트 연결
+        nextBtn.addEventListener('click', proceedToNext);
 
         // 1단계: 진동
         const vibBtn = document.getElementById('vib-btn');
@@ -572,10 +575,10 @@
                 zoomOutMsg.innerText = '축소를 완벽히 마스터하셨습니다!';
                 unlockNext();
                 
-                // 편의성 개선: 1.5초 후 자동으로 10단계(폭죽 화면)로 이동
+                // 에러 해결: 모바일 브라우저의 .click() 무시 방지를 위해 함수 직접 호출로 변경
                 setTimeout(() => {
                     if (currentStep === 9) {
-                        nextBtn.click();
+                        proceedToNext();
                     }
                 }, 1500);
             }
