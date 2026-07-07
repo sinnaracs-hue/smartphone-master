@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <!-- 모바일 화면에 꽉 차고 확대/축소를 방지하여 실제 앱처럼 보이게 하는 설정 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>스마트폰 첫걸음</title>
+    
+    <!-- Tailwind CSS (디자인 프레임워크) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 축하 팡파르(폭죽) 효과 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- 시니어분들이 읽기 편한 폰트 (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            /* 모바일에서 텍스트 드래그 방지 */
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+        /* 슬라이더(동그라미) 크기 확대 및 스타일링 */
+        input[type=range] {
+            accent-color: #2563eb;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        /* 진동 애니메이션 효과 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px) rotate(-5deg); }
+            40%, 80% { transform: translateX(10px) rotate(5deg); }
+        }
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 h-screen w-screen overflow-hidden flex justify-center sm:items-center">
+
+    <!-- 스마트폰 화면 프레임 (데스크탑에서는 폰 모양, 모바일에서는 꽉 찬 화면) -->
+    <div class="bg-white w-full h-full sm:max-w-md sm:h-[850px] sm:rounded-[40px] sm:shadow-2xl flex flex-col relative overflow-hidden">
+        
+        <!-- 상단 헤더 (진행도) -->
+        <div class="bg-blue-600 text-white pt-10 pb-4 px-6 rounded-b-3xl shadow-md z-10">
+            <h1 class="text-3xl font-black text-center mb-4">📱 첫걸음 마스터</h1>
+            <div class="flex justify-center space-x-3" id="progress-dots">
+                <div class="w-4 h-4 rounded-full bg-white"></div>
+                <div class="w-4 h-4 rounded-full bg-blue-400"></div>
+                <div class="w-4 h-4 rounded-full bg-blue-400"></div>
+                <div class="w-4 h-4 rounded-full bg-blue-400"></div>
+            </div>
+        </div>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <div class="flex-grow p-6 overflow-y-auto" id="content-area">
+            
+            <!-- 1단계: 진동 모드 -->
+            <div id="step1" class="step-card flex flex-col h-full justify-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">1단계: 진동 모드</h2>
+                <p class="text-xl text-slate-600 text-center mb-10 leading-relaxed">스마트폰이 부르르 떨리는 것을<br>직접 느껴보세요.</p>
+                <div class="flex flex-col items-center">
+                    <button id="vib-btn" class="bg-amber-400 text-amber-900 text-3xl font-extrabold py-10 w-full rounded-3xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-4">
+                        <span class="text-5xl">📳</span> 진동 켜기
+                    </button>
+                    <p id="vib-msg" class="text-xl text-emerald-600 font-bold mt-8 opacity-0 transition-opacity">✔ 잘하셨어요! 아래 버튼을 누르세요.</p>
+                </div>
+            </div>
+
+            <!-- 2단계: 글자 키우기 -->
+            <div id="step2" class="step-card hidden flex-col h-full justify-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">2단계: 글자 키우기</h2>
+                <p class="text-xl text-slate-600 text-center mb-6 leading-relaxed">파란색 동그라미를 오른쪽으로<br>끝까지 밀어보세요.</p>
+                <div class="bg-slate-100 p-6 rounded-2xl mb-8 h-40 flex items-center justify-center border-2 border-slate-200">
+                    <span id="sample-text" class="text-[18px] font-bold text-slate-800 transition-all duration-200">이 글자가 커집니다!</span>
+                </div>
+                <input type="range" id="font-slider" min="18" max="45" value="18" class="w-full h-6 bg-slate-300 rounded-full appearance-none">
+                <p id="font-msg" class="text-xl text-emerald-600 font-bold mt-8 text-center opacity-0 transition-opacity">✔ 글자가 잘 보입니다!</p>
+            </div>
+
+            <!-- 3단계: 말로 입력하기 -->
+            <div id="step3" class="step-card hidden flex-col h-full justify-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">3단계: 말로 입력하기</h2>
+                <p class="text-xl text-slate-600 text-center mb-6 leading-relaxed">입을 손으로 살짝 가리고<br>마이크를 누른 후 말씀하세요.</p>
+                <p class="text-3xl font-black text-blue-600 text-center mb-10">"오늘 날씨 어때?"</p>
+                <div class="flex flex-col items-center">
+                    <button id="mic-btn" class="bg-red-500 text-white rounded-full p-10 shadow-xl active:scale-95 transition-all">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    </button>
+                    <p id="mic-status" class="mt-8 text-2xl font-bold text-slate-400 h-8">마이크를 눌러주세요</p>
+                </div>
+            </div>
+
+            <!-- 4단계: 손가락 체조 -->
+            <div id="step4" class="step-card hidden flex-col h-full">
+                <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">4단계: 손가락 체조</h2>
+                <p class="text-lg text-slate-600 text-center mb-6">순서대로 화면을 조작해 보세요.</p>
+                
+                <div class="space-y-6 flex-grow">
+                    <!-- 미션 1: 터치 -->
+                    <div class="bg-white p-5 rounded-2xl shadow-md border-2 border-slate-100" id="task1">
+                        <p class="font-bold text-xl mb-3">1. 톡! 가볍게 누르기</p>
+                        <button id="tap-btn" class="bg-blue-500 text-white py-4 rounded-xl w-full text-2xl font-bold active:scale-95 shadow-md">👆 여기를 톡!</button>
+                    </div>
+                    
+                    <!-- 미션 2: 드래그 -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200 opacity-40 pointer-events-none transition-all duration-500" id="task2">
+                        <p class="font-bold text-xl mb-4">2. 오른쪽으로 쓱~ 밀기</p>
+                        <input type="range" id="drag-slider" min="0" max="100" value="0" class="w-full h-8 bg-blue-200 rounded-full appearance-none">
+                    </div>
+                    
+                    <!-- 미션 3: 롱프레스 -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200 opacity-40 pointer-events-none transition-all duration-500" id="task3">
+                        <p class="font-bold text-xl mb-3">3. 2초간 꾸욱~ 누르기</p>
+                        <button id="hold-btn" class="bg-purple-500 text-white py-5 rounded-xl w-full text-2xl font-bold relative overflow-hidden shadow-md">
+                            <div id="hold-progress" class="absolute left-0 top-0 bottom-0 bg-purple-700 w-0 transition-all duration-75"></div>
+                            <span class="relative z-10">⏱️ 꾸욱 누르기</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5단계: 완료 화면 -->
+            <div id="step5" class="step-card hidden flex-col h-full justify-center items-center text-center">
+                <div class="text-8xl mb-6">🎓</div>
+                <h2 class="text-4xl font-black text-blue-600 mb-6 leading-tight">축하합니다!<br>스마트폰 마스터!</h2>
+                <p class="text-2xl text-slate-700 mb-10">이제 스마트폰이<br>두렵지 않으시죠?</p>
+                <button onclick="location.reload()" class="text-xl text-blue-500 underline font-bold py-4 px-8">처음부터 다시 연습하기</button>
+            </div>
+
+        </div>
+
+        <!-- 하단 고정 버튼 (다음 단계로 이동) -->
+        <div class="p-6 bg-white border-t-2 border-slate-100 z-10" id="footer-area">
+            <button id="next-btn" class="w-full bg-slate-300 text-slate-500 text-2xl font-bold py-5 rounded-2xl transition-all duration-300 pointer-events-none">
+                미션을 완료해주세요
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 4;
+        const nextBtn = document.getElementById('next-btn');
+        const progressDots = document.getElementById('progress-dots');
+
+        // [공통 함수] 다음 버튼 활성화
+        function unlockNext() {
+            nextBtn.classList.remove('bg-slate-300', 'text-slate-500', 'pointer-events-none');
+            nextBtn.classList.add('bg-blue-600', 'text-white', 'shadow-xl');
+            nextBtn.innerText = '다음 단계로 가기 ➔';
+            // 버튼이 흔들리며 시선을 끔
+            nextBtn.classList.add('animate-shake');
+            setTimeout(() => nextBtn.classList.remove('animate-shake'), 500);
+        }
+
+        // [공통 함수] 다음 버튼 비활성화
+        function lockNext() {
+            nextBtn.classList.add('bg-slate-300', 'text-slate-500', 'pointer-events-none');
+            nextBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-xl');
+            nextBtn.innerText = '미션을 완료해주세요';
+        }
+
+        // [공통 함수] 단계 이동 처리
+        nextBtn.addEventListener('click', () => {
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            document.getElementById(`step${currentStep}`).classList.remove('flex');
+            
+            currentStep++;
+            
+            document.getElementById(`step${currentStep}`).classList.remove('hidden');
+            document.getElementById(`step${currentStep}`).classList.add('flex');
+
+            // 진행도 점(Dot) 업데이트
+            if(currentStep <= totalSteps) {
+                const dots = progressDots.children;
+                for(let i=0; i<totalSteps; i++) {
+                    dots[i].className = i < currentStep ? "w-4 h-4 rounded-full bg-white" : "w-4 h-4 rounded-full bg-blue-400";
+                }
+                lockNext();
+            } else {
+                // 마지막 완료 화면
+                document.getElementById('footer-area').classList.add('hidden');
+                document.getElementById('progress-dots').parentElement.classList.add('hidden');
+                fireConfetti();
+            }
+        });
+
+        // ==========================================
+        // 1단계: 진동 로직
+        // ==========================================
+        const vibBtn = document.getElementById('vib-btn');
+        vibBtn.addEventListener('click', () => {
+            // 안드로이드 기기 등에서 실제 진동 발생 (0.5초)
+            if (navigator.vibrate) navigator.vibrate(500);
+            
+            // 시각적 피드백 (버튼 흔들림)
+            vibBtn.classList.add('animate-shake');
+            setTimeout(() => vibBtn.classList.remove('animate-shake'), 500);
+            
+            document.getElementById('vib-msg').classList.remove('opacity-0');
+            vibBtn.classList.replace('bg-amber-400', 'bg-emerald-400');
+            vibBtn.classList.replace('text-amber-900', 'text-emerald-900');
+            vibBtn.innerHTML = '<span class="text-5xl">✔</span> 확인 완료';
+            
+            unlockNext();
+        });
+
+        // ==========================================
+        // 2단계: 글자 크기 로직
+        // ==========================================
+        const fontSlider = document.getElementById('font-slider');
+        const sampleText = document.getElementById('sample-text');
+        fontSlider.addEventListener('input', (e) => {
+            const size = e.target.value;
+            sampleText.style.fontSize = size + 'px';
+            
+            // 글자를 40px 이상으로 키우면 성공
+            if (size >= 40) {
+                document.getElementById('font-msg').classList.remove('opacity-0');
+                unlockNext();
+            }
+        });
+
+        // ==========================================
+        // 3단계: 마이크 로직 (가상 딜레이)
+        // ==========================================
+        const micBtn = document.getElementById('mic-btn');
+        const micStatus = document.getElementById('mic-status');
+        let isListening = false;
+
+        micBtn.addEventListener('click', () => {
+            if (isListening) return;
+            isListening = true;
+            
+            micStatus.innerText = '말씀해 주세요... (듣는 중)';
+            micStatus.classList.replace('text-slate-400', 'text-red-500');
+            micBtn.classList.add('animate-pulse');
+            
+            // 2.5초 후 자동으로 성공 처리
+            setTimeout(() => {
+                micBtn.classList.remove('animate-pulse');
+                micBtn.classList.replace('bg-red-500', 'bg-emerald-500');
+                micStatus.innerHTML = '<span class="text-emerald-600">인식 성공: "오늘 날씨 어때?"</span>';
+                unlockNext();
+            }, 2500);
+        });
+
+        // ==========================================
+        // 4단계: 손가락 체조 로직
+        // ==========================================
+        const task1Btn = document.getElementById('tap-btn');
+        const task2Slider = document.getElementById('drag-slider');
+        const task3Btn = document.getElementById('hold-btn');
+
+        // Task 1: 탭
+        task1Btn.addEventListener('click', () => {
+            task1Btn.classList.replace('bg-blue-500', 'bg-emerald-500');
+            task1Btn.innerHTML = '✔ 잘하셨어요!';
+            // Task 2 활성화
+            const task2 = document.getElementById('task2');
+            task2.classList.remove('opacity-40', 'pointer-events-none', 'bg-slate-50');
+            task2.classList.add('bg-white', 'shadow-md');
+        });
+
+        // Task 2: 드래그
+        task2Slider.addEventListener('input', (e) => {
+            if(e.target.value >= 95) { // 끝까지 밀면
+                task2Slider.value = 100;
+                task2Slider.classList.add('accent-emerald-500');
+                // Task 3 활성화
+                const task3 = document.getElementById('task3');
+                task3.classList.remove('opacity-40', 'pointer-events-none', 'bg-slate-50');
+                task3.classList.add('bg-white', 'shadow-md');
+            }
+        });
+
+        // Task 3: 롱프레스 (길게 누르기)
+        let holdTimer;
+        let holdProgress = 0;
+        const holdBar = document.getElementById('hold-progress');
+        
+        const startHold = (e) => {
+            e.preventDefault(); // 화면 스크롤 방지
+            if(holdProgress >= 100) return;
+            holdProgress = 0;
+            holdBar.style.width = '0%';
+            
+            holdTimer = setInterval(() => {
+                holdProgress += 4; // 약 1.5초~2초 소요
+                holdBar.style.width = holdProgress + '%';
+                if(holdProgress >= 100) {
+                    clearInterval(holdTimer);
+                    task3Btn.classList.replace('bg-purple-500', 'bg-emerald-500');
+                    task3Btn.querySelector('span').innerText = '✔ 완벽해요!';
+                    unlockNext(); // 모든 체조 완료 시 다음 버튼 활성화
+                }
+            }, 60);
+        };
+        
+        const stopHold = () => {
+            clearInterval(holdTimer);
+            if(holdProgress < 100) {
+                holdProgress = 0;
+                holdBar.style.width = '0%';
+            }
+        };
+
+        // 터치 및 마우스 이벤트 모두 대응
+        task3Btn.addEventListener('mousedown', startHold);
+        task3Btn.addEventListener('touchstart', startHold);
+        task3Btn.addEventListener('mouseup', stopHold);
+        task3Btn.addEventListener('mouseleave', stopHold);
+        task3Btn.addEventListener('touchend', stopHold);
+
+        // ==========================================
+        // 5단계: 폭죽 효과 로직
+        // ==========================================
+        function fireConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+        function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+        
+    </script>
+</body>
+</html>
