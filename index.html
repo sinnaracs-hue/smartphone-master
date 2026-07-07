@@ -2,39 +2,40 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- 모바일 화면에 꽉 차고 확대/축소를 방지하여 실제 앱처럼 보이게 하는 설정 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>스마트폰 첫걸음</title>
     
-    <!-- Tailwind CSS (디자인 프레임워크) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 축하 팡파르(폭죽) 효과 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- 시니어분들이 읽기 편한 폰트 (Noto Sans KR) -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
         body { 
             font-family: 'Noto Sans KR', sans-serif; 
-            /* 모바일에서 텍스트 드래그 방지 */
             user-select: none; 
             -webkit-user-select: none;
+            /* 모바일 브라우저 새로고침 당김 및 스크롤 방지 */
+            overscroll-behavior-y: contain; 
+            touch-action: pan-y;
         }
-        /* 슬라이더(동그라미) 크기 확대 및 스타일링 */
+        /* 드래그, 확대축소 영역에서는 기본 터치(스크롤) 차단 */
+        .touch-action-none {
+            touch-action: none;
+        }
         input[type=range] {
             accent-color: #2563eb;
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             background: #2563eb;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 3px solid white;
         }
-        /* 진동 애니메이션 효과 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-10px) rotate(-5deg); }
@@ -43,105 +44,217 @@
         .animate-shake {
             animation: shake 0.5s ease-in-out;
         }
+        /* 동그라미 완료 애니메이션 */
+        .pop-scale {
+            animation: pop 0.3s ease-out forwards;
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="bg-slate-100 h-screen w-screen overflow-hidden flex justify-center sm:items-center">
 
-    <!-- 스마트폰 화면 프레임 (데스크탑에서는 폰 모양, 모바일에서는 꽉 찬 화면) -->
     <div class="bg-white w-full h-full sm:max-w-md sm:h-[850px] sm:rounded-[40px] sm:shadow-2xl flex flex-col relative overflow-hidden">
         
         <!-- 상단 헤더 (진행도) -->
-        <div class="bg-blue-600 text-white pt-10 pb-4 px-6 rounded-b-3xl shadow-md z-10">
-            <h1 class="text-3xl font-black text-center mb-4">📱 첫걸음 마스터</h1>
-            <div class="flex justify-center space-x-3" id="progress-dots">
-                <div class="w-4 h-4 rounded-full bg-white"></div>
-                <div class="w-4 h-4 rounded-full bg-blue-400"></div>
-                <div class="w-4 h-4 rounded-full bg-blue-400"></div>
-                <div class="w-4 h-4 rounded-full bg-blue-400"></div>
+        <div class="bg-blue-600 text-white pt-10 pb-4 px-4 rounded-b-3xl shadow-md z-10 shrink-0">
+            <h1 class="text-3xl sm:text-4xl font-black text-center mb-4">📱 첫걸음 마스터</h1>
+            <div class="flex justify-center space-x-1 sm:space-x-2" id="progress-dots">
+                <!-- 자바스크립트로 동적 생성됩니다 (총 9단계) -->
             </div>
         </div>
 
         <!-- 메인 콘텐츠 영역 -->
-        <div class="flex-grow p-6 overflow-y-auto" id="content-area">
+        <div class="flex-grow p-5 sm:p-6 flex flex-col relative overflow-y-auto" id="content-area">
             
             <!-- 1단계: 진동 모드 -->
-            <div id="step1" class="step-card flex flex-col h-full justify-center">
-                <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">1단계: 진동 모드</h2>
-                <p class="text-xl text-slate-600 text-center mb-10 leading-relaxed">스마트폰이 부르르 떨리는 것을<br>직접 느껴보세요.</p>
-                <div class="flex flex-col items-center">
-                    <button id="vib-btn" class="bg-amber-400 text-amber-900 text-3xl font-extrabold py-10 w-full rounded-3xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-4">
+            <div id="step1" class="step-card flex flex-col h-full">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">1단계: 진동 모드</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-6">스마트폰의 떨림을 느껴보세요.</p>
+                <div class="flex flex-col items-center flex-grow justify-center">
+                    <button id="vib-btn" class="bg-amber-400 text-amber-900 text-4xl font-extrabold py-10 w-full rounded-3xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-4">
                         <span class="text-5xl">📳</span> 진동 켜기
                     </button>
-                    <p id="vib-msg" class="text-xl text-emerald-600 font-bold mt-8 opacity-0 transition-opacity">✔ 잘하셨어요! 아래 버튼을 누르세요.</p>
+                    <p id="vib-msg" class="text-xl text-emerald-600 font-bold mt-6 opacity-0 transition-opacity">✔ 잘하셨어요! 아래 버튼을 누르세요.</p>
+                </div>
+                <div class="bg-blue-100 p-5 rounded-3xl mt-auto border-2 border-blue-200 shrink-0 shadow-sm">
+                    <p class="text-xl font-black text-blue-800 mb-2">💡 실제 핸드폰에 적용하기</p>
+                    <p class="text-lg sm:text-xl font-medium text-slate-800 break-keep leading-snug">화면 위를 쓸어내리고 <b>[스피커 🔊]</b>를 눌러 <b>[진동 📳]</b>으로 바꾸세요.</p>
                 </div>
             </div>
 
             <!-- 2단계: 글자 키우기 -->
-            <div id="step2" class="step-card hidden flex-col h-full justify-center">
-                <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">2단계: 글자 키우기</h2>
-                <p class="text-xl text-slate-600 text-center mb-6 leading-relaxed">파란색 동그라미를 오른쪽으로<br>끝까지 밀어보세요.</p>
-                <div class="bg-slate-100 p-6 rounded-2xl mb-8 h-40 flex items-center justify-center border-2 border-slate-200">
-                    <span id="sample-text" class="text-[18px] font-bold text-slate-800 transition-all duration-200">이 글자가 커집니다!</span>
+            <div id="step2" class="step-card hidden flex-col h-full">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">2단계: 글자 키우기</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-6">파란색 원을 오른쪽으로 끝까지 미세요.</p>
+                <div class="flex-grow flex flex-col justify-center touch-action-none">
+                    <div class="bg-slate-100 p-6 rounded-3xl mb-8 h-40 flex items-center justify-center border-2 border-slate-200">
+                        <span id="sample-text" class="text-[24px] font-bold text-slate-800 transition-all duration-200">이 글자가 커집니다!</span>
+                    </div>
+                    <input type="range" id="font-slider" min="24" max="45" value="24" class="w-full h-8 bg-slate-300 rounded-full appearance-none">
+                    <p id="font-msg" class="text-xl text-emerald-600 font-bold mt-6 text-center opacity-0 transition-opacity">✔ 글자가 시원하게 잘 보입니다!</p>
                 </div>
-                <input type="range" id="font-slider" min="18" max="45" value="18" class="w-full h-6 bg-slate-300 rounded-full appearance-none">
-                <p id="font-msg" class="text-xl text-emerald-600 font-bold mt-8 text-center opacity-0 transition-opacity">✔ 글자가 잘 보입니다!</p>
+                <div class="bg-blue-100 p-5 rounded-3xl mt-auto border-2 border-blue-200 shrink-0 shadow-sm">
+                    <p class="text-xl font-black text-blue-800 mb-2">💡 실제 핸드폰에 적용하기</p>
+                    <p class="text-lg sm:text-xl font-medium text-slate-800 break-keep leading-snug"><b>설정(⚙️) ➔ 디스플레이 ➔ 글자 크기</b>에서 조절하세요.</p>
+                </div>
             </div>
 
-            <!-- 3단계: 말로 입력하기 -->
-            <div id="step3" class="step-card hidden flex-col h-full justify-center">
-                <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">3단계: 말로 입력하기</h2>
-                <p class="text-xl text-slate-600 text-center mb-6 leading-relaxed">입을 손으로 살짝 가리고<br>마이크를 누른 후 말씀하세요.</p>
-                <p class="text-3xl font-black text-blue-600 text-center mb-10">"오늘 날씨 어때?"</p>
-                <div class="flex flex-col items-center">
+            <!-- 3단계: 화면 밝게 하기 -->
+            <div id="step3" class="step-card hidden flex-col h-full">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">3단계: 화면 밝게 하기</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-6">오른쪽으로 밀어 화면을 밝게 하세요.</p>
+                <div class="flex-grow flex flex-col justify-center touch-action-none">
+                    <div class="bg-black p-6 rounded-3xl mb-8 h-40 flex items-center justify-center border-2 border-slate-200 transition-colors duration-200 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-yellow-300 opacity-0 transition-opacity duration-200" id="bright-overlay"></div>
+                        <span class="text-2xl font-bold text-white relative z-10 drop-shadow-md">화면이 밝아집니다 ☀️</span>
+                    </div>
+                    <input type="range" id="bright-slider" min="0" max="100" value="0" class="w-full h-8 bg-slate-300 rounded-full appearance-none">
+                    <p id="bright-msg" class="text-xl text-emerald-600 font-bold mt-6 text-center opacity-0 transition-opacity">✔ 화면이 환해졌습니다!</p>
+                </div>
+                <div class="bg-blue-100 p-5 rounded-3xl mt-auto border-2 border-blue-200 shrink-0 shadow-sm">
+                    <p class="text-xl font-black text-blue-800 mb-2">💡 실제 핸드폰에 적용하기</p>
+                    <p class="text-lg sm:text-xl font-medium text-slate-800 break-keep leading-snug">화면 위를 쓸어내리고 <b>[해 모양 ☀️]</b> 바를 오른쪽으로 미세요.</p>
+                </div>
+            </div>
+
+            <!-- 4단계: 말로 입력하기 -->
+            <div id="step4" class="step-card hidden flex-col h-full">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">4단계: 말로 입력하기</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-6">마이크를 누르고 스마트폰에 말씀하세요.</p>
+                <div class="flex-grow flex flex-col items-center justify-center">
+                    <p class="text-4xl font-black text-blue-600 text-center mb-8">"오늘 날씨 어때?"</p>
                     <button id="mic-btn" class="bg-red-500 text-white rounded-full p-10 shadow-xl active:scale-95 transition-all">
                         <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                     </button>
                     <p id="mic-status" class="mt-8 text-2xl font-bold text-slate-400 h-8">마이크를 눌러주세요</p>
                 </div>
-            </div>
-
-            <!-- 4단계: 손가락 체조 -->
-            <div id="step4" class="step-card hidden flex-col h-full">
-                <h2 class="text-3xl font-bold text-slate-800 mb-4 text-center">4단계: 손가락 체조</h2>
-                <p class="text-lg text-slate-600 text-center mb-6">순서대로 화면을 조작해 보세요.</p>
-                
-                <div class="space-y-6 flex-grow">
-                    <!-- 미션 1: 터치 -->
-                    <div class="bg-white p-5 rounded-2xl shadow-md border-2 border-slate-100" id="task1">
-                        <p class="font-bold text-xl mb-3">1. 톡! 가볍게 누르기</p>
-                        <button id="tap-btn" class="bg-blue-500 text-white py-4 rounded-xl w-full text-2xl font-bold active:scale-95 shadow-md">👆 여기를 톡!</button>
-                    </div>
-                    
-                    <!-- 미션 2: 드래그 -->
-                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200 opacity-40 pointer-events-none transition-all duration-500" id="task2">
-                        <p class="font-bold text-xl mb-4">2. 오른쪽으로 쓱~ 밀기</p>
-                        <input type="range" id="drag-slider" min="0" max="100" value="0" class="w-full h-8 bg-blue-200 rounded-full appearance-none">
-                    </div>
-                    
-                    <!-- 미션 3: 롱프레스 -->
-                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200 opacity-40 pointer-events-none transition-all duration-500" id="task3">
-                        <p class="font-bold text-xl mb-3">3. 2초간 꾸욱~ 누르기</p>
-                        <button id="hold-btn" class="bg-purple-500 text-white py-5 rounded-xl w-full text-2xl font-bold relative overflow-hidden shadow-md">
-                            <div id="hold-progress" class="absolute left-0 top-0 bottom-0 bg-purple-700 w-0 transition-all duration-75"></div>
-                            <span class="relative z-10">⏱️ 꾸욱 누르기</span>
-                        </button>
-                    </div>
+                <div class="bg-blue-100 p-5 rounded-3xl mt-auto border-2 border-blue-200 shrink-0 shadow-sm">
+                    <p class="text-xl font-black text-blue-800 mb-2">💡 실제 핸드폰에 적용하기</p>
+                    <p class="text-lg sm:text-xl font-medium text-slate-800 break-keep leading-snug">키보드에서 <b>[마이크 🎙️]</b>를 누르고 말하면 글자가 써집니다.</p>
                 </div>
             </div>
 
-            <!-- 5단계: 완료 화면 -->
-            <div id="step5" class="step-card hidden flex-col h-full justify-center items-center text-center">
-                <div class="text-8xl mb-6">🎓</div>
-                <h2 class="text-4xl font-black text-blue-600 mb-6 leading-tight">축하합니다!<br>스마트폰 마스터!</h2>
-                <p class="text-2xl text-slate-700 mb-10">이제 스마트폰이<br>두렵지 않으시죠?</p>
-                <button onclick="location.reload()" class="text-xl text-blue-500 underline font-bold py-4 px-8">처음부터 다시 연습하기</button>
+            <!-- 5단계: 톡 누르기 -->
+            <div id="step5" class="step-card hidden flex-col h-full justify-center">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">5단계: 톡! 누르기</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-10">가볍게 한 번 톡! <b>총 3번</b> 누르세요.</p>
+                
+                <!-- 3회 진행도 표시 -->
+                <div class="flex justify-center space-x-6 mb-10" id="tap-progress">
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">1</div>
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">2</div>
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">3</div>
+                </div>
+
+                <div class="flex-grow flex items-center">
+                    <button id="tap-btn" class="bg-blue-500 text-white py-14 rounded-3xl w-full text-4xl font-bold active:scale-95 shadow-lg transition-all touch-action-none">👆 여기를 톡!</button>
+                </div>
+                <p id="tap-msg" class="text-2xl text-emerald-600 font-bold mt-6 text-center h-8"></p>
+            </div>
+
+            <!-- 6단계: 쓱 밀기 -->
+            <div id="step6" class="step-card hidden flex-col h-full justify-center">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">6단계: 쓱~ 밀기</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-10">오른쪽으로 끝까지 미세요. <b>총 3번</b></p>
+                
+                <div class="flex justify-center space-x-6 mb-10" id="drag-progress">
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">1</div>
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">2</div>
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">3</div>
+                </div>
+
+                <div class="flex-grow flex flex-col justify-center touch-action-none">
+                    <div class="bg-slate-100 p-8 rounded-3xl border-2 border-slate-200 shadow-inner">
+                        <input type="range" id="drag-slider" min="0" max="100" value="0" class="w-full h-10 bg-blue-200 rounded-full appearance-none transition-all duration-300">
+                    </div>
+                    <p id="drag-msg" class="text-2xl text-emerald-600 font-bold mt-8 text-center h-8"></p>
+                </div>
+            </div>
+
+            <!-- 7단계: 꾸욱 누르기 -->
+            <div id="step7" class="step-card hidden flex-col h-full justify-center">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">7단계: 꾸욱~ 누르기</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-10">버튼을 2초 동안 길게 누르세요. <b>총 3번</b></p>
+                
+                <div class="flex justify-center space-x-6 mb-10" id="hold-progress-dots">
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">1</div>
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">2</div>
+                    <div class="w-14 h-14 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-3xl transition-all">3</div>
+                </div>
+
+                <div class="flex-grow flex items-center">
+                    <button id="hold-btn" class="bg-purple-500 text-white py-14 rounded-3xl w-full text-4xl font-bold relative overflow-hidden shadow-lg select-none touch-action-none">
+                        <div id="hold-progress" class="absolute left-0 top-0 bottom-0 bg-purple-700 w-0 transition-all duration-75"></div>
+                        <span class="relative z-10" id="hold-btn-text">⏱️ 꾸욱 누르기</span>
+                    </button>
+                </div>
+                <p id="hold-msg" class="text-2xl text-emerald-600 font-bold mt-6 text-center h-8"></p>
+            </div>
+
+            <!-- 8단계: 사진 확대하기 -->
+            <div id="step8" class="step-card hidden flex-col h-full justify-center">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">8단계: 사진 확대하기</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-8">두 손가락을 대고 바깥으로 벌리세요. <b>(3회)</b></p>
+                
+                <div class="flex justify-center space-x-6 mb-6" id="zoom-in-progress">
+                    <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-2xl transition-all">1</div>
+                    <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-2xl transition-all">2</div>
+                    <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-2xl transition-all">3</div>
+                </div>
+
+                <div class="flex-grow flex items-center justify-center bg-slate-200 rounded-3xl border-2 border-slate-300 overflow-hidden touch-action-none relative" id="zoom-in-area">
+                    <div class="text-[60px] transition-transform duration-300 pointer-events-none select-none" id="zoom-in-target">
+                        🌸
+                    </div>
+                    <!-- PC 안내문구 -->
+                    <div class="absolute bottom-3 text-sm font-bold text-slate-500 hidden sm:block">PC: 마우스 휠 위로 굴리기</div>
+                </div>
+                <p id="zoom-in-msg" class="text-2xl text-emerald-600 font-bold mt-6 text-center h-8"></p>
+
+                <div class="bg-blue-100 p-5 rounded-3xl mt-6 border-2 border-blue-200 shrink-0 shadow-sm">
+                    <p class="text-xl font-black text-blue-800 mb-2">💡 실제 핸드폰에 적용하기</p>
+                    <p class="text-lg sm:text-xl font-medium text-slate-800 break-keep leading-snug"><b>사진 앱</b>이나 <b>지도</b>를 자세히 볼 때 사용하세요.</p>
+                </div>
+            </div>
+
+            <!-- 9단계: 사진 축소하기 -->
+            <div id="step9" class="step-card hidden flex-col h-full justify-center">
+                <h2 class="text-3xl font-black text-slate-800 mb-3 text-center">9단계: 사진 축소하기</h2>
+                <p class="text-xl sm:text-2xl font-bold text-slate-600 text-center mb-8">두 손가락을 대고 안쪽으로 오므리세요. <b>(3회)</b></p>
+                
+                <div class="flex justify-center space-x-6 mb-6" id="zoom-out-progress">
+                    <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-2xl transition-all">1</div>
+                    <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-2xl transition-all">2</div>
+                    <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-black text-2xl transition-all">3</div>
+                </div>
+
+                <div class="flex-grow flex items-center justify-center bg-slate-200 rounded-3xl border-2 border-slate-300 overflow-hidden touch-action-none relative" id="zoom-out-area">
+                    <div class="text-[160px] transition-transform duration-300 pointer-events-none select-none" id="zoom-out-target">
+                        🐶
+                    </div>
+                    <!-- PC 안내문구 -->
+                    <div class="absolute bottom-3 text-sm font-bold text-slate-500 hidden sm:block">PC: 마우스 휠 아래로 굴리기</div>
+                </div>
+                <p id="zoom-out-msg" class="text-2xl text-emerald-600 font-bold mt-6 text-center h-8"></p>
+            </div>
+
+            <!-- 10단계: 완료 화면 -->
+            <div id="step10" class="step-card hidden flex-col h-full justify-center items-center text-center">
+                <div class="text-[100px] mb-6">🎓</div>
+                <h2 class="text-5xl font-black text-blue-600 mb-8 leading-tight">축하합니다!<br>스마트폰 마스터!</h2>
+                <p class="text-3xl font-bold text-slate-700 mb-12">모든 훈련을<br>완벽하게 마치셨습니다!</p>
+                <button onclick="location.reload()" class="bg-blue-100 text-blue-700 text-2xl font-bold py-5 px-10 rounded-3xl active:scale-95 transition-transform">처음부터 다시 연습하기</button>
             </div>
 
         </div>
 
-        <!-- 하단 고정 버튼 (다음 단계로 이동) -->
-        <div class="p-6 bg-white border-t-2 border-slate-100 z-10" id="footer-area">
-            <button id="next-btn" class="w-full bg-slate-300 text-slate-500 text-2xl font-bold py-5 rounded-2xl transition-all duration-300 pointer-events-none">
+        <!-- 하단 고정 버튼 -->
+        <div class="p-4 sm:p-6 bg-white border-t-2 border-slate-100 z-10 shrink-0" id="footer-area">
+            <button id="next-btn" class="w-full bg-slate-300 text-slate-500 text-2xl font-bold py-4 sm:py-5 rounded-2xl transition-all duration-300 pointer-events-none">
                 미션을 완료해주세요
             </button>
         </div>
@@ -150,28 +263,42 @@
 
     <script>
         let currentStep = 1;
-        const totalSteps = 4;
+        const totalSteps = 9; // 1~9단계 + 완료(10단계)
         const nextBtn = document.getElementById('next-btn');
         const progressDots = document.getElementById('progress-dots');
 
-        // [공통 함수] 다음 버튼 활성화
+        // 진행도 점(Dot) 초기 생성
+        for(let i=0; i<totalSteps; i++) {
+            const dot = document.createElement('div');
+            dot.className = i === 0 ? "w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-white" : "w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-400";
+            progressDots.appendChild(dot);
+        }
+
+        // 공통 UI 업데이트 함수 (동그라미 3개 채우기)
+        function updateMissionDots(containerId, count) {
+            const dots = document.getElementById(containerId).children;
+            if(count > 0 && count <= 3) {
+                const targetDot = dots[count-1];
+                targetDot.classList.replace('bg-slate-200', 'bg-emerald-500');
+                targetDot.classList.replace('text-slate-400', 'text-white');
+                targetDot.classList.add('pop-scale');
+            }
+        }
+
         function unlockNext() {
             nextBtn.classList.remove('bg-slate-300', 'text-slate-500', 'pointer-events-none');
             nextBtn.classList.add('bg-blue-600', 'text-white', 'shadow-xl');
             nextBtn.innerText = '다음 단계로 가기 ➔';
-            // 버튼이 흔들리며 시선을 끔
             nextBtn.classList.add('animate-shake');
             setTimeout(() => nextBtn.classList.remove('animate-shake'), 500);
         }
 
-        // [공통 함수] 다음 버튼 비활성화
         function lockNext() {
             nextBtn.classList.add('bg-slate-300', 'text-slate-500', 'pointer-events-none');
             nextBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-xl');
             nextBtn.innerText = '미션을 완료해주세요';
         }
 
-        // [공통 함수] 단계 이동 처리
         nextBtn.addEventListener('click', () => {
             document.getElementById(`step${currentStep}`).classList.add('hidden');
             document.getElementById(`step${currentStep}`).classList.remove('flex');
@@ -181,156 +308,307 @@
             document.getElementById(`step${currentStep}`).classList.remove('hidden');
             document.getElementById(`step${currentStep}`).classList.add('flex');
 
-            // 진행도 점(Dot) 업데이트
             if(currentStep <= totalSteps) {
                 const dots = progressDots.children;
                 for(let i=0; i<totalSteps; i++) {
-                    dots[i].className = i < currentStep ? "w-4 h-4 rounded-full bg-white" : "w-4 h-4 rounded-full bg-blue-400";
+                    dots[i].className = i < currentStep ? "w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-white" : "w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-400";
                 }
                 lockNext();
             } else {
-                // 마지막 완료 화면
+                // 10단계(완료 화면)
                 document.getElementById('footer-area').classList.add('hidden');
                 document.getElementById('progress-dots').parentElement.classList.add('hidden');
                 fireConfetti();
             }
         });
 
-        // ==========================================
-        // 1단계: 진동 로직
-        // ==========================================
+        // ===================================
+        // 1단계: 진동 모드
+        // ===================================
         const vibBtn = document.getElementById('vib-btn');
         vibBtn.addEventListener('click', () => {
-            // 안드로이드 기기 등에서 실제 진동 발생 (0.5초)
             if (navigator.vibrate) navigator.vibrate(500);
-            
-            // 시각적 피드백 (버튼 흔들림)
             vibBtn.classList.add('animate-shake');
             setTimeout(() => vibBtn.classList.remove('animate-shake'), 500);
-            
             document.getElementById('vib-msg').classList.remove('opacity-0');
             vibBtn.classList.replace('bg-amber-400', 'bg-emerald-400');
             vibBtn.classList.replace('text-amber-900', 'text-emerald-900');
             vibBtn.innerHTML = '<span class="text-5xl">✔</span> 확인 완료';
-            
             unlockNext();
         });
 
-        // ==========================================
-        // 2단계: 글자 크기 로직
-        // ==========================================
+        // ===================================
+        // 2단계: 글자 키우기
+        // ===================================
         const fontSlider = document.getElementById('font-slider');
         const sampleText = document.getElementById('sample-text');
         fontSlider.addEventListener('input', (e) => {
-            const size = e.target.value;
-            sampleText.style.fontSize = size + 'px';
-            
-            // 글자를 40px 이상으로 키우면 성공
-            if (size >= 40) {
+            sampleText.style.fontSize = e.target.value + 'px';
+            if (e.target.value >= 40) {
                 document.getElementById('font-msg').classList.remove('opacity-0');
                 unlockNext();
             }
         });
 
-        // ==========================================
-        // 3단계: 마이크 로직 (가상 딜레이)
-        // ==========================================
+        // ===================================
+        // 3단계: 화면 밝기
+        // ===================================
+        const brightSlider = document.getElementById('bright-slider');
+        const brightOverlay = document.getElementById('bright-overlay');
+        brightSlider.addEventListener('input', (e) => {
+            brightOverlay.style.opacity = e.target.value / 100;
+            if (e.target.value >= 80) {
+                document.getElementById('bright-msg').classList.remove('opacity-0');
+                unlockNext();
+            }
+        });
+
+        // ===================================
+        // 4단계: 마이크
+        // ===================================
         const micBtn = document.getElementById('mic-btn');
         const micStatus = document.getElementById('mic-status');
         let isListening = false;
-
         micBtn.addEventListener('click', () => {
             if (isListening) return;
             isListening = true;
-            
             micStatus.innerText = '말씀해 주세요... (듣는 중)';
             micStatus.classList.replace('text-slate-400', 'text-red-500');
             micBtn.classList.add('animate-pulse');
-            
-            // 2.5초 후 자동으로 성공 처리
             setTimeout(() => {
                 micBtn.classList.remove('animate-pulse');
                 micBtn.classList.replace('bg-red-500', 'bg-emerald-500');
                 micStatus.innerHTML = '<span class="text-emerald-600">인식 성공: "오늘 날씨 어때?"</span>';
                 unlockNext();
-            }, 2500);
+            }, 2000);
         });
 
-        // ==========================================
-        // 4단계: 손가락 체조 로직
-        // ==========================================
+        // ===================================
+        // 5단계: 톡 누르기 (3회)
+        // ===================================
+        let tapCount = 0;
         const task1Btn = document.getElementById('tap-btn');
-        const task2Slider = document.getElementById('drag-slider');
-        const task3Btn = document.getElementById('hold-btn');
-
-        // Task 1: 탭
+        const tapMsg = document.getElementById('tap-msg');
         task1Btn.addEventListener('click', () => {
-            task1Btn.classList.replace('bg-blue-500', 'bg-emerald-500');
-            task1Btn.innerHTML = '✔ 잘하셨어요!';
-            // Task 2 활성화
-            const task2 = document.getElementById('task2');
-            task2.classList.remove('opacity-40', 'pointer-events-none', 'bg-slate-50');
-            task2.classList.add('bg-white', 'shadow-md');
-        });
-
-        // Task 2: 드래그
-        task2Slider.addEventListener('input', (e) => {
-            if(e.target.value >= 95) { // 끝까지 밀면
-                task2Slider.value = 100;
-                task2Slider.classList.add('accent-emerald-500');
-                // Task 3 활성화
-                const task3 = document.getElementById('task3');
-                task3.classList.remove('opacity-40', 'pointer-events-none', 'bg-slate-50');
-                task3.classList.add('bg-white', 'shadow-md');
+            if(tapCount >= 3) return;
+            tapCount++;
+            updateMissionDots('tap-progress', tapCount);
+            
+            if(tapCount < 3) {
+                tapMsg.innerText = `좋아요! 앞으로 ${3 - tapCount}번 더!`;
+                task1Btn.classList.add('scale-95');
+                setTimeout(() => task1Btn.classList.remove('scale-95'), 150);
+            } else {
+                task1Btn.classList.replace('bg-blue-500', 'bg-emerald-500');
+                task1Btn.innerHTML = '✔ 완벽해요!';
+                tapMsg.innerText = '모두 완료했습니다!';
+                unlockNext();
             }
         });
 
-        // Task 3: 롱프레스 (길게 누르기)
+        // ===================================
+        // 6단계: 쓱 밀기 (3회)
+        // ===================================
+        let dragCount = 0;
+        const task2Slider = document.getElementById('drag-slider');
+        const dragMsg = document.getElementById('drag-msg');
+        let isDraggingReset = false; // 리셋 중 중복 방지
+
+        task2Slider.addEventListener('input', (e) => {
+            if(isDraggingReset) {
+                e.preventDefault();
+                return;
+            }
+            if(e.target.value >= 95 && dragCount < 3) {
+                dragCount++;
+                isDraggingReset = true;
+                task2Slider.value = 100;
+                updateMissionDots('drag-progress', dragCount);
+                
+                if(dragCount < 3) {
+                    dragMsg.innerText = `잘하셨어요! ${3 - dragCount}번 더 해보세요.`;
+                    // 0.6초 후 자동으로 다시 맨 앞으로 돌려보냄
+                    setTimeout(() => {
+                        task2Slider.value = 0;
+                        isDraggingReset = false;
+                    }, 600);
+                } else {
+                    task2Slider.classList.add('accent-emerald-500');
+                    dragMsg.innerText = '모두 완료했습니다!';
+                    unlockNext();
+                }
+            }
+        });
+
+        // ===================================
+        // 7단계: 꾸욱 누르기 (3회)
+        // ===================================
+        let holdCount = 0;
         let holdTimer;
         let holdProgress = 0;
+        const task3Btn = document.getElementById('hold-btn');
         const holdBar = document.getElementById('hold-progress');
+        const holdMsg = document.getElementById('hold-msg');
+        const holdBtnText = document.getElementById('hold-btn-text');
         
         const startHold = (e) => {
-            e.preventDefault(); // 화면 스크롤 방지
-            if(holdProgress >= 100) return;
+            if(e.cancelable) e.preventDefault(); 
+            if(holdCount >= 3) return;
+            
             holdProgress = 0;
             holdBar.style.width = '0%';
             
             holdTimer = setInterval(() => {
-                holdProgress += 4; // 약 1.5초~2초 소요
+                holdProgress += 4; // 약 1.5초
                 holdBar.style.width = holdProgress + '%';
+                
                 if(holdProgress >= 100) {
                     clearInterval(holdTimer);
-                    task3Btn.classList.replace('bg-purple-500', 'bg-emerald-500');
-                    task3Btn.querySelector('span').innerText = '✔ 완벽해요!';
-                    unlockNext(); // 모든 체조 완료 시 다음 버튼 활성화
+                    holdCount++;
+                    updateMissionDots('hold-progress-dots', holdCount);
+                    
+                    if(holdCount < 3) {
+                        holdMsg.innerText = `성공! ${3 - holdCount}번 더 누르세요.`;
+                        holdProgress = 0;
+                        setTimeout(() => holdBar.style.width = '0%', 300);
+                    } else {
+                        task3Btn.classList.replace('bg-purple-500', 'bg-emerald-500');
+                        holdBtnText.innerText = '✔ 완벽해요!';
+                        holdMsg.innerText = '모두 완료했습니다!';
+                        unlockNext(); 
+                    }
                 }
             }, 60);
         };
         
         const stopHold = () => {
             clearInterval(holdTimer);
-            if(holdProgress < 100) {
+            if(holdProgress < 100 && holdCount < 3) {
                 holdProgress = 0;
                 holdBar.style.width = '0%';
             }
         };
 
-        // 터치 및 마우스 이벤트 모두 대응
         task3Btn.addEventListener('mousedown', startHold);
         task3Btn.addEventListener('touchstart', startHold);
         task3Btn.addEventListener('mouseup', stopHold);
         task3Btn.addEventListener('mouseleave', stopHold);
         task3Btn.addEventListener('touchend', stopHold);
 
-        // ==========================================
-        // 5단계: 폭죽 효과 로직
-        // ==========================================
+        // ===================================
+        // 8단계: 확대하기 (Zoom In) - 3회
+        // ===================================
+        let zoomInCount = 0;
+        const zoomInArea = document.getElementById('zoom-in-area');
+        const zoomInTarget = document.getElementById('zoom-in-target');
+        const zoomInMsg = document.getElementById('zoom-in-msg');
+        
+        let initDistIn = 0;
+        let inFired = false;
+
+        function handleZoomInSuccess() {
+            if(inFired || zoomInCount >= 3) return;
+            inFired = true;
+            zoomInCount++;
+            
+            updateMissionDots('zoom-in-progress', zoomInCount);
+            zoomInTarget.style.transform = `scale(${1 + (zoomInCount * 0.8)})`; // 점점 커짐
+
+            if(zoomInCount < 3) {
+                zoomInMsg.innerText = `확대 성공! ${3 - zoomInCount}번 더 크게!`;
+                setTimeout(() => { inFired = false; }, 800); // 쿨타임
+            } else {
+                zoomInMsg.innerText = '확대를 완벽히 마스터하셨습니다!';
+                unlockNext();
+            }
+        }
+
+        // 터치 (모바일) 이벤트
+        zoomInArea.addEventListener('touchstart', e => {
+            if(e.cancelable) e.preventDefault();
+            if (e.touches.length === 2) {
+                initDistIn = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            }
+        });
+        zoomInArea.addEventListener('touchmove', e => {
+            if(e.cancelable) e.preventDefault();
+            if (e.touches.length === 2 && initDistIn > 0 && !inFired) {
+                let curDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                if (curDist - initDistIn > 30) { // 30px 이상 넓어지면 성공
+                    handleZoomInSuccess();
+                }
+            }
+        });
+        zoomInArea.addEventListener('touchend', e => {
+            if (e.touches.length < 2) initDistIn = 0;
+        });
+
+        // 휠 (PC) 이벤트 대체
+        zoomInArea.addEventListener('wheel', e => {
+            e.preventDefault();
+            if (e.deltaY < 0) handleZoomInSuccess(); // 휠 위로 올림
+        });
+
+        // ===================================
+        // 9단계: 축소하기 (Zoom Out) - 3회
+        // ===================================
+        let zoomOutCount = 0;
+        const zoomOutArea = document.getElementById('zoom-out-area');
+        const zoomOutTarget = document.getElementById('zoom-out-target');
+        const zoomOutMsg = document.getElementById('zoom-out-msg');
+        
+        let initDistOut = 0;
+        let outFired = false;
+
+        function handleZoomOutSuccess() {
+            if(outFired || zoomOutCount >= 3) return;
+            outFired = true;
+            zoomOutCount++;
+            
+            updateMissionDots('zoom-out-progress', zoomOutCount);
+            // 점점 작아짐 (초기 크기 160px에서 스케일 다운)
+            zoomOutTarget.style.transform = `scale(${1 - (zoomOutCount * 0.25)})`; 
+
+            if(zoomOutCount < 3) {
+                zoomOutMsg.innerText = `축소 성공! ${3 - zoomOutCount}번 더 작게!`;
+                setTimeout(() => { outFired = false; }, 800);
+            } else {
+                zoomOutMsg.innerText = '축소를 완벽히 마스터하셨습니다!';
+                unlockNext();
+            }
+        }
+
+        zoomOutArea.addEventListener('touchstart', e => {
+            if(e.cancelable) e.preventDefault();
+            if (e.touches.length === 2) {
+                initDistOut = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            }
+        });
+        zoomOutArea.addEventListener('touchmove', e => {
+            if(e.cancelable) e.preventDefault();
+            if (e.touches.length === 2 && initDistOut > 0 && !outFired) {
+                let curDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                if (initDistOut - curDist > 30) { // 30px 이상 좁아지면 성공
+                    handleZoomOutSuccess();
+                }
+            }
+        });
+        zoomOutArea.addEventListener('touchend', e => {
+            if (e.touches.length < 2) initDistOut = 0;
+        });
+
+        zoomOutArea.addEventListener('wheel', e => {
+            e.preventDefault();
+            if (e.deltaY > 0) handleZoomOutSuccess(); // 휠 아래로 내림
+        });
+
+        // ===================================
+        // 폭죽 효과 (10단계)
+        // ===================================
         function fireConfetti() {
             var duration = 3 * 1000;
             var animationEnd = Date.now() + duration;
             var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
             var interval = setInterval(function() {
                 var timeLeft = animationEnd - Date.now();
                 if (timeLeft <= 0) { return clearInterval(interval); }
